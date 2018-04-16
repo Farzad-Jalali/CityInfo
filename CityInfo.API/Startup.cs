@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CityInfo.API.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -10,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Serialization;
+using NLog.Extensions.Logging;
 
 namespace CityInfo.API
 {
@@ -31,6 +33,12 @@ namespace CityInfo.API
                     new XmlDataContractSerializerOutputFormatter()
                     ))
                 ;
+
+#if DEBUG
+            services.AddTransient<IMailService, LocalMailService>();
+#else
+            services.AddTransient<IMailService, CloudMailService>();
+#endif
 
             //services.AddMvc()
             //    .AddJsonOptions(o =>
@@ -54,6 +62,9 @@ namespace CityInfo.API
             loggerFactory.AddConsole();
 
             loggerFactory.AddDebug();
+
+            //loggerFactory.AddProvider(new NLog.Extensions.Logging.NLogLoggerProvider());
+            loggerFactory.AddNLog();
 
 
             if (env.IsDevelopment())

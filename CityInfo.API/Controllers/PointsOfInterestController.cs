@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CityInfo.API.Model;
+using CityInfo.API.Services;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -15,10 +16,13 @@ namespace CityInfo.API.Controllers
     {
 
         public ILogger<PointsOfInterestController> _logger;
+        public IMailService _mailService;
 
-        public PointsOfInterestController(ILogger<PointsOfInterestController> logger)
+
+        public PointsOfInterestController(ILogger<PointsOfInterestController> logger , IMailService mailService)
         {
             _logger = logger;
+            _mailService = mailService;
         }
 
         [HttpGet("{CityId}/poinsofinterest")]
@@ -26,7 +30,7 @@ namespace CityInfo.API.Controllers
         {
             try
             {
-               // throw new Exception("Amazoing error");
+              // throw new Exception("Amazoing error");
 
                 var city = CitiesDataStore.current.cities.FirstOrDefault(c => c.Id == cityId);
 
@@ -223,6 +227,9 @@ namespace CityInfo.API.Controllers
 
 
             city.PointsOfInterest.Remove(thePointOfinterestFromStore);
+
+
+            _mailService.Send("POI deleted", $"POI {thePointOfinterestFromStore.Name} with id {thePointOfinterestFromStore.Id} was deleted");
 
             return NoContent();
         }

@@ -9,8 +9,8 @@ namespace CityInfo.API.Services
     public class LocalMailService : IMailService
     {
 
-        private string _to = "admin@jalai.com";
-        private string _from = "noreply@jalai.com";
+        private string _to = Startup.Configuration["mailSettings:mailToAddress"];
+        private string _from = Startup.Configuration["mailSettings:mailFromAddress"];
 
         public void Send(string subject , string message)
         {

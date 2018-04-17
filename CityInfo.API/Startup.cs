@@ -17,13 +17,32 @@ namespace CityInfo.API
 {
     public class Startup
     {
+        #region asp.net core 1.x
+        //public static IConfigurationRoot Configuration;
+
+
+        //public Startup( IHostingEnvironment env )
+        //{
+        //    var builder = new ConfigurationBuilder()
+        //        .SetBasePath(env.ContentRootPath)
+        //        .AddJsonFile("appSetting.json", optional:false , reloadOnChange: true  );
+
+
+        //    Configuration = builder.Build();
+
+        #endregion
+
+        #region asp.net core 2
+        public static IConfiguration Configuration { get; private set; }
 
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
+        #endregion
 
-        public IConfiguration Configuration { get; }
+
+
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)

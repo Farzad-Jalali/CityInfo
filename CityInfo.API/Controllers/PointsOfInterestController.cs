@@ -14,15 +14,19 @@ namespace CityInfo.API.Controllers
     [Route("api/cities")]
     public class PointsOfInterestController : Controller
     {
+        private ICityInfoRepository _repo;
+
 
         public ILogger<PointsOfInterestController> _logger;
         public IMailService _mailService;
 
 
-        public PointsOfInterestController(ILogger<PointsOfInterestController> logger , IMailService mailService)
+        public PointsOfInterestController(ILogger<PointsOfInterestController> logger, IMailService mailService
+            , ICityInfoRepository repo)
         {
             _logger = logger;
             _mailService = mailService;
+            _repo = repo;
         }
 
         [HttpGet("{CityId}/poinsofinterest")]
@@ -30,19 +34,31 @@ namespace CityInfo.API.Controllers
         {
             try
             {
-              // throw new Exception("Amazoing error");
-
-                var city = CitiesDataStore.current.cities.FirstOrDefault(c => c.Id == cityId);
-
-                if (city == null)
+                if (!_repo.CityExists(cityId))
                 {
-                    _logger.LogInformation($"city with id {cityId} wasn't found");
+                    _logger.LogInformation($"city with id {cityId} wasn't found when processing poi!");
                     return NotFound();
                 }
 
-                return Ok(city.PointsOfInterest);
+                var poiList = _repo.GetPointsOfInterestForCity(cityId);
+                
+                if (poiList == null)
+                {
+                    return NotFound();
+                }
+                
+                var result = poiList.Select(x => new PointOfInterestDto()
+                {
+                    Id = x.Id,
+                    Description = x.Description,
+                    Name = x.Name
+                });
+
+                return Ok(result);
+
+
             }
-            catch( Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogCritical($"Exception while getting pontt of interest , cityId = {cityId}", ex);
                 return StatusCode(500, "A Problem happened while handdling your request");

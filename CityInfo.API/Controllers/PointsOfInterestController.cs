@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using CityInfo.API.Model;
 using CityInfo.API.Services;
 using Microsoft.AspNetCore.JsonPatch;
@@ -46,17 +47,10 @@ namespace CityInfo.API.Controllers
                 {
                     return NotFound();
                 }
-                
-                var result = poiList.Select(x => new PointOfInterestDto()
-                {
-                    Id = x.Id,
-                    Description = x.Description,
-                    Name = x.Name
-                });
+
+                var result = Mapper.Map<IEnumerable<PointOfInterestDto>>(poiList);
 
                 return Ok(result);
-
-
             }
             catch (Exception ex)
             {
@@ -69,19 +63,20 @@ namespace CityInfo.API.Controllers
         [HttpGet("{CityId}/poinsofinterest/{id}", Name = "GetPointOfInterest")]
         public IActionResult GetPointOfInterest(int cityId, int id)
         {
-            var city = CitiesDataStore.current.cities.FirstOrDefault(c => c.Id == cityId);
 
-            if (city == null)
+            if (! _repo.CityExists(cityId))
             {
                 return NotFound();
             }
 
-            var poi = city.PointsOfInterest.FirstOrDefault(p => p.Id == id);
+            var poi = _repo.GetPointsOfInterestForCity(cityId);
 
             if (poi == null)
             {
                 return NotFound();
             }
+
+            var result = Mapper.Map<PointOfInterestDto>(poi);
 
             return Ok(poi);
         }

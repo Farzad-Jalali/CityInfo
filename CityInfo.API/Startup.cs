@@ -50,9 +50,9 @@ namespace CityInfo.API
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc()
-                .AddMvcOptions( o => o.OutputFormatters.Add( 
-                    new XmlDataContractSerializerOutputFormatter()
-                    ))
+                .AddMvcOptions(o => o.OutputFormatters.Add(
+                   new XmlDataContractSerializerOutputFormatter()
+                   ))
                 ;
 
 #if DEBUG
@@ -62,7 +62,7 @@ namespace CityInfo.API
 #endif
 
             var connStr = Startup.Configuration["ConnectionStrings:CityInfoDBConnection"];
-            services.AddDbContext<CityInfoContext>( o => o.UseSqlServer(connStr));
+            services.AddDbContext<CityInfoContext>(o => o.UseSqlServer(connStr));
 
             services.AddScoped<ICityInfoRepository, CityInfoRepository>();
 
@@ -84,7 +84,7 @@ namespace CityInfo.API
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory , CityInfoContext cityInfoContext)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, CityInfoContext cityInfoContext)
         {
 
             loggerFactory.AddConsole();
@@ -101,6 +101,13 @@ namespace CityInfo.API
             }
 
             cityInfoContext.EnsureSeedDataForContext();
+
+            AutoMapper.Mapper.Initialize(cfg =>
+            {
+                cfg.CreateMap<Entities.City, Model.CityWithoutPointOfInterestDto>();
+                cfg.CreateMap<Entities.City, Model.CityDto>();
+                cfg.CreateMap<Entities.PointOfInterest, Model.PointOfInterestDto>();
+            });
 
             app.UseStatusCodePages();
 

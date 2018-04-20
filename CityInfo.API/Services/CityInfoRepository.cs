@@ -28,6 +28,10 @@ namespace CityInfo.API.Services
             return _context.Cities.Any(c => c.Id == cityId);
         }
 
+        public void DeletePointOfInterestForCity(PointOfInterest pointOfInterest)
+        {
+            _context.PointsOfInterest.Remove(pointOfInterest);
+        }
 
         public IEnumerable<City> GetCities()
         {

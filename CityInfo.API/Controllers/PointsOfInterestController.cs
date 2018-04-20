@@ -82,7 +82,6 @@ namespace CityInfo.API.Controllers
         }
 
 
-
         [HttpPost("{CityId}/poinsofinterest")]
         public IActionResult CreatePointOfInterest(int cityId, [FromBody] PointOfInterestForCreationDto pointOfInterest)
         {
@@ -204,25 +203,26 @@ namespace CityInfo.API.Controllers
         public IActionResult DeletePointOfInterest(int cityId, int id)
         {
 
-            var city = CitiesDataStore.current.cities.FirstOrDefault(c => c.Id == cityId);
-            if (city == null)
+            if (!_repo.CityExists(cityId))
             {
                 return NotFound();
             }
 
-            var thePointOfinterestFromStore = city.PointsOfInterest.FirstOrDefault(p => p.Id == id);
-
-
-            if (thePointOfinterestFromStore == null)
+            var pointOfInterestEntities = _repo.GetPointOfInterestForCity(cityId, id);
+            if (pointOfInterestEntities == null)
             {
                 return NotFound();
             }
 
+            _repo.DeletePointOfInterestForCity(pointOfInterestEntities);
 
-            city.PointsOfInterest.Remove(thePointOfinterestFromStore);
+            if (! _repo.Save() )
+            {
+                return StatusCode(500, "A problem happened while handling your request.");
+            }
 
 
-            _mailService.Send("POI deleted", $"POI {thePointOfinterestFromStore.Name} with id {thePointOfinterestFromStore.Id} was deleted");
+            _mailService.Send("POI deleted", $"POI {pointOfInterestEntities.Name} with id {pointOfInterestEntities.Id} was deleted");
 
             return NoContent();
         }

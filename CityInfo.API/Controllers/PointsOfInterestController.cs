@@ -42,7 +42,7 @@ namespace CityInfo.API.Controllers
                 }
 
                 var poiList = _repo.GetPointsOfInterestForCity(cityId);
-                
+
                 if (poiList == null)
                 {
                     return NotFound();
@@ -64,7 +64,7 @@ namespace CityInfo.API.Controllers
         public IActionResult GetPointOfInterest(int cityId, int id)
         {
 
-            if (! _repo.CityExists(cityId))
+            if (!_repo.CityExists(cityId))
             {
                 return NotFound();
             }
@@ -101,24 +101,19 @@ namespace CityInfo.API.Controllers
                 return BadRequest(ModelState);
             }
 
-            var city = CitiesDataStore.current.cities.FirstOrDefault(c => c.Id == cityId);
-            if (city == null)
+            if (_repo.CityExists(cityId))
             {
                 return NotFound();
             }
 
-            var maxPointOfinterestId = CitiesDataStore.current.cities.SelectMany(c => c.PointsOfInterest).Max(p => p.Id);
+            var finalPointOfinterest = Mapper.Map<Entities.PointOfInterest>(pointOfInterest);
 
+            _repo.AddPointOfInterestForCity(cityId , finalPointOfinterest);
 
-            var finalPointOfinterest = new PointOfInterestDto()
+            if ( ! _repo.Save())
             {
-                Id = ++maxPointOfinterestId,
-                Name = pointOfInterest.Name,
-                Description = pointOfInterest.Description
-            };
-
-
-            city.PointsOfInterest.Add(finalPointOfinterest);
+                return StatusCode(500, "A problem happened while handling your request.");
+            }
 
             return CreatedAtRoute("GetPointOfInterest", new { cityId = cityId, id = finalPointOfinterest.Id }, finalPointOfinterest);
         }
@@ -141,25 +136,23 @@ namespace CityInfo.API.Controllers
                 return BadRequest(ModelState);
             }
 
-            var city = CitiesDataStore.current.cities.FirstOrDefault(c => c.Id == cityId);
-            if (city == null)
+            if (! _repo.CityExists(cityId))
             {
                 return NotFound();
             }
 
-            var thePointOfinterestId = city.PointsOfInterest.FirstOrDefault(p => p.Id == id);
 
-
-            if (thePointOfinterestId == null)
+            var poiEntities = _repo.GetPointOfInterestForCity(cityId, id);
+            if (poiEntities == null)
             {
                 return NotFound();
             }
 
-            thePointOfinterestId.Name = pointOfInterest.Name;
-            thePointOfinterestId.Description = pointOfInterest.Description;
+            Mapper.Map(pointOfInterest, poiEntities);
+
+            _repo.Save();
 
             return NoContent();
-
         }
 
 
@@ -172,47 +165,36 @@ namespace CityInfo.API.Controllers
                 return BadRequest();
             }
 
-
-            var city = CitiesDataStore.current.cities.FirstOrDefault(c => c.Id == cityId);
-            if (city == null)
+            if (!_repo.CityExists(cityId))
             {
                 return NotFound();
             }
 
-            var thePointOfinterestFromStore = city.PointsOfInterest.FirstOrDefault(p => p.Id == id);
-
-
-            if (thePointOfinterestFromStore == null)
+            var pointOfInterestEntities = _repo.GetPointOfInterestForCity(cityId, id);
+            if (pointOfInterestEntities == null)
             {
                 return NotFound();
             }
 
+            var pointOfInterestToPatch = Mapper.Map<PointOfInterestForUpdateDto>(pointOfInterestEntities );
 
-            var pointOfinterestToPatch =
-                    new PointOfInterestForUpdateDto()
-                    {
-                        Name = thePointOfinterestFromStore.Name,
-                        Description = thePointOfinterestFromStore.Description
-
-                    };
-
-            patchDoc.ApplyTo(pointOfinterestToPatch, ModelState);
+            patchDoc.ApplyTo(pointOfInterestToPatch, ModelState);
 
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            TryValidateModel(pointOfinterestToPatch);
+            TryValidateModel(pointOfInterestToPatch);
 
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
+            Mapper.Map(pointOfInterestToPatch, pointOfInterestEntities);
+            _repo.Save();
 
-            thePointOfinterestFromStore.Name = pointOfinterestToPatch.Name;
-            thePointOfinterestFromStore.Description = pointOfinterestToPatch.Description;
 
             return NoContent();
         }
